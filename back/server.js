@@ -1,6 +1,7 @@
 const express = require("express");
 const app = express();
 const db = require("./database");
+const bcrypt = require("bcrypt");
 
 app.use(express.json());
 
@@ -110,13 +111,17 @@ app.post("/commentaire", async (req, res) => {
 // Create du CREAD pour les utilisateurs
 app.post("/utilisateur", async (req, res) => {
   // Check si tous les champs sont bien présent
-  if (req.body.nom && req.body.prenom && req.body.email) {
+  if (req.body.nom && req.body.prenom && req.body.email && req.body.mdp) {
     try {
       // Connexion à la base de données
       let connexion = await db.getConnection();
+      // Génération d'un sel
+      const sel = await bcrypt.genSalt(10);
+      // Hash du mot de passe
+      const hashMdp = await bcrypt.hash(req.body.mdp, sel);
       // Insertion dans la base de données
       await connexion.query(
-        `INSERT INTO utilisateur(nom, prenom, email) VALUES ('${req.body.nom}', '${req.body.prenom}', '${req.body.email}')`
+        `INSERT INTO utilisateur(nom, prenom, email, mdp) VALUES ('${req.body.nom}', '${req.body.prenom}', '${req.body.email}', '${hashMdp}')`
       );
       res.status(200).json("Utilisateur ajouté");
     } catch (error) {
